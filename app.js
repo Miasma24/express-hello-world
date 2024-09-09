@@ -64,8 +64,8 @@ app.post("/webhook", (req, res) => {
     console.log(req.body.destination);
     console.log(req.body.events);
     console.log(req.body.destination == null);
-    console.log(req.body.events == null)
-    if (req.body.destination != null && req.body.events == null) {
+    console.log(req.body.events == []);
+    if (req.body.destination != null && req.body.events == []) {
       res.sendStatus(200);
     }
     else {
