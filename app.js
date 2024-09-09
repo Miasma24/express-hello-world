@@ -61,13 +61,13 @@ app.post("/webhook", (req, res) => {
     request.write(dataString);
     request.end();
   } else {
-    console.log(req.body.destination);
+    /*console.log(req.body.destination);
     console.log(req.body.events);
     console.log(typeof req.body.destination);
     console.log(typeof req.body.events);
     console.log(req.body.events == "[]");
-    console.log(req.body.events.length);
-    if (req.body.destination != null && req.body.events == []) {
+    console.log(req.body.events.length);*/
+    if (req.body.destination != null && req.body.events.length == 0) {
       res.sendStatus(200);
     }
     else {
