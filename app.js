@@ -21,8 +21,8 @@ app.get("/", (_, res) => {
 });
 
 //ルーティングの設定-MessaginAPI
-app.post("/webhook", (req, _) => {
-  if (req.body.events[0].type === "message") {
+app.post("/webhook", (req, res) => {
+  if (req.body && req.body.events && req.body.events.length > 0 && req.body.events[0].type === "message") {
     res.send("HTTP POST request sent to the webhook URL!");
     const headers = {
       "Content-Type": "application/json",
@@ -37,7 +37,7 @@ app.post("/webhook", (req, _) => {
         },
         {
           type: "text",
-          text: "May I help you?"
+          text: "May I help you?",
         },
       ],
     });
@@ -47,7 +47,7 @@ app.post("/webhook", (req, _) => {
       method: "POST",
       headers: headers,
       body: dataString,
-    }
+    };
     const request = https.request(webhookOptions, res => {
       res.on("data", d => {
         process.stdout.write(d);
@@ -59,6 +59,8 @@ app.post("/webhook", (req, _) => {
 
     request.write(dataString);
     request.end();
+  } else {
+    res.status(400).send("Bad request: Invalid webhook event format.");
   }
 });
 
