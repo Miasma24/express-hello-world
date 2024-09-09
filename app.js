@@ -22,6 +22,7 @@ app.get("/", (_, res) => {
 
 //ルーティングの設定-MessaginAPI
 app.post("/webhook", (req, res) => {
+  console.log(JSON.stringify(req.body, null, 2));
   if (req.body && req.body.events && req.body.events.length > 0 && req.body.events[0].type === "message") {
     res.send("HTTP POST request sent to the webhook URL!");
     const headers = {
@@ -60,7 +61,6 @@ app.post("/webhook", (req, res) => {
     request.write(dataString);
     request.end();
   } else {
-    console.log(req.body);
     res.status(400).send("Bad request: Invalid webhook event format.");
   }
 });
