@@ -61,6 +61,10 @@ app.post("/webhook", (req, res) => {
     request.write(dataString);
     request.end();
   } else {
+    console.log(JSON.parse(req.body).destination);
+    console.log(JSON.parse(req.body).events);
+    console.log(JSON.parse(req.body).destination == null);
+    console.log(JSON.parse(req.body).events == null);
     if (JSON.parse(req.body).destination != null && JSON.parse(req.body).events == null) {
       res.sendStatus(200);
     }
