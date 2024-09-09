@@ -60,6 +60,7 @@ app.post("/webhook", (req, res) => {
     request.write(dataString);
     request.end();
   } else {
+    console.log(req.body);
     res.status(400).send("Bad request: Invalid webhook event format.");
   }
 });
