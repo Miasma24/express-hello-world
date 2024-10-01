@@ -16,5 +16,8 @@
   },
   "engines": {
     "node": ">=14"
+  },
+  "devDependencies": {
+    "vite-plugin-env-compatible": "^2.0.1"
   }
 }
