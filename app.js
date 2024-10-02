@@ -54,32 +54,32 @@ app.get("/", (_, res) => {
 // サーバーへのリクエスト
 app.post('/check-token', async (req, res) => {
   const idToken = req.body.idToken;
-
+  
   try {
-    const userInfo = await verifyIdToken(idToken);
-    const userId = userInfo.sub; // IDトークンからユーザーIDを取得
-    const currentDate = new Date().toISOString().split('T')[0]; // 今日の日付（YYYY-MM-DD形式）
+    // トークン検証とアクセス回数確認の処理を実行
+    const profile = await verifyToken(idToken);
+    const userId = profile.sub;
 
-    const client = await pool.connect();
+    // 今日の日付を取得
+    const today = new Date().toISOString().slice(0, 10);
 
-    // データベースでユーザーを確認
-    const result = await client.query('SELECT last_access_date FROM user_access WHERE user_id = $1', [userId]);
+    // ユーザーのアクセス履歴をデータベースで確認
+    const query = 'SELECT access_date FROM user_access WHERE user_id = $1 AND access_date = $2';
+    const result = await connection.query(query, [userId, today]);
 
-    if (result.rows.length > 0 && result.rows[0].last_access_date === currentDate) {
-      res.json({ message: 'またきてね' }); // 今日すでにアクセス済みの場合
-    } else {
-      // 初回または別の日にアクセスした場合、アクセス日時を更新
-      await client.query(
-        'INSERT INTO user_access (user_id, last_access_date) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET last_access_date = $2',
-        [userId, currentDate]
-      );
-      res.json({ message: 'ようこそ！' });
+    if (result.rows.length > 0) {
+      // 既に今日アクセスしている場合
+      return res.json({ allowed: false, message: 'またきてね' });
     }
 
-    client.release();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'エラーが発生しました。' });
+    // 今日が初めてのアクセスの場合、データベースに新しいアクセスを登録
+    const insertQuery = 'INSERT INTO user_access (user_id, access_date) VALUES ($1, $2)';
+    await connection.query(insertQuery, [userId, today]);
+
+    res.json({ allowed: true });
+  } catch (error) {
+    console.error('Error processing token', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
