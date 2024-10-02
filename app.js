@@ -51,11 +51,66 @@ app.get("/", (_, res) => {
   res.sendStatus(200);
 });
 
-// サーバーへのリクエスト
-app.post('/check-token', async (req, res) => {
+//ルーティングの設定-MessaginAPI
+app.post("/webhook", async (req, res) => {
+  console.log(JSON.stringify(req.body, null, 2));
+
   const idToken = req.body.idToken;
-  
+
   try {
+
+    if (req.body && req.body.events && req.body.events.length > 0 && req.body.events[0].type === "message") {
+      res.send("HTTP POST request sent to the webhook URL!");
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + TOKEN,
+      };
+      const dataString = JSON.stringify({
+        replyToken: req.body.events[0].replyToken,
+        messages: [
+          {
+            type: "text",
+            text: "Hello, user",
+          },
+          {
+            type: "text",
+            text: "May I help you?",
+          },
+        ],
+      });
+      const webhookOptions = {
+        hostname: "api.line.me",
+        path: "/v2/bot/message/reply",
+        method: "POST",
+        headers: headers,
+        body: dataString,
+      };
+      const request = https.request(webhookOptions, res => {
+        res.on("data", d => {
+          process.stdout.write(d);
+        });
+      });
+      request.on("error", err => {
+        console.error(err);
+      });
+
+      request.write(dataString);
+      request.end();
+    } else {
+      /*console.log(req.body.destination);
+      console.log(req.body.events);
+      console.log(typeof req.body.destination);
+      console.log(typeof req.body.events);
+      console.log(req.body.events == "[]");
+      console.log(req.body.events.length);*/
+      if (req.body.destination != null && req.body.events.length == 0) {
+        res.sendStatus(200);
+      }
+      else {
+        res.status(400).send("Bad request: Invalid webhook event format.");
+      }
+    }
+
     // トークン検証とアクセス回数確認の処理を実行
     const profile = await verifyToken(idToken);
     const userId = profile.sub;
@@ -81,62 +136,8 @@ app.post('/check-token', async (req, res) => {
     console.error('Error processing token', error);
     res.status(500).send('Internal Server Error');
   }
-});
 
-//ルーティングの設定-MessaginAPI
-app.post("/webhook", (req, res) => {
-  console.log(JSON.stringify(req.body, null, 2));
-  if (req.body && req.body.events && req.body.events.length > 0 && req.body.events[0].type === "message") {
-    res.send("HTTP POST request sent to the webhook URL!");
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + TOKEN,
-    };
-    const dataString = JSON.stringify({
-      replyToken: req.body.events[0].replyToken,
-      messages: [
-        {
-          type: "text",
-          text: "Hello, user",
-        },
-        {
-          type: "text",
-          text: "May I help you?",
-        },
-      ],
-    });
-    const webhookOptions = {
-      hostname: "api.line.me",
-      path: "/v2/bot/message/reply",
-      method: "POST",
-      headers: headers,
-      body: dataString,
-    };
-    const request = https.request(webhookOptions, res => {
-      res.on("data", d => {
-        process.stdout.write(d);
-      });
-    });
-    request.on("error", err => {
-      console.error(err);
-    });
 
-    request.write(dataString);
-    request.end();
-  } else {
-    /*console.log(req.body.destination);
-    console.log(req.body.events);
-    console.log(typeof req.body.destination);
-    console.log(typeof req.body.events);
-    console.log(req.body.events == "[]");
-    console.log(req.body.events.length);*/
-    if (req.body.destination != null && req.body.events.length == 0) {
-      res.sendStatus(200);
-    }
-    else {
-      res.status(400).send("Bad request: Invalid webhook event format.");
-    }
-  }
 });
 
 // リスナーの設定
